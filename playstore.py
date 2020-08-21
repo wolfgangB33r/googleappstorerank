@@ -4,23 +4,10 @@ given an appid and search terms
 """
 import requests, time, sched, random, os, ssl
 
-YOUR_DT_API_URL = '?'
-YOUR_DT_API_TOKEN = '?'
-YOUR_APP_ID = '?'
+YOUR_DT_API_URL = '???'
+YOUR_DT_API_TOKEN = '???'
+YOUR_APP_ID = 'at.smartlab.tshop'
 KEYWORDS = ['pos', 'point of sale', 'kasse', 'restaurant pos', 'invoice print', 'cashier', 'Cash Register']
-
-def registerDynatraceMetrics():
-	tsdef = {
-		"displayName" : "Appstore ranking",
-		"unit" : "Count",
-		"dimensions": ['keyword'],
-		"types": [
-			"AppStore"
-		]
-	}
-
-	r = requests.put(YOUR_DT_API_URL + 'api/v1/timeseries/custom:appstore.ranking.perkeyword/?Api-Token=' + YOUR_DT_API_TOKEN, json=tsdef)
-	#print(r)
 
 
 def checkAppPosition(appid, searchterm):
@@ -32,8 +19,6 @@ def checkAppPosition(appid, searchterm):
 
 	try:
 		r = requests.get('https://play.google.com/store/search?q=' + searchterm + '&c=apps', headers=HEADERS)
-		#print("Playstore search: %d" % r.status_code)
-		#print(r.text)
 		seg = r.text.split('JpEzfb')
 		c = 1
 		for s in seg:
@@ -46,31 +31,16 @@ def checkAppPosition(appid, searchterm):
 
 
 def main():
-	registerDynatraceMetrics()
-
-	series = []
-
+	metricStr = ""
 	for kw in KEYWORDS:
-		series.append({ "timeseriesId" : "custom:appstore.ranking.perkeyword", 
-		  "dimensions" : { "keyword" : kw },
-		  "dataPoints" : [ [ int(time.time() * 1000)  , checkAppPosition(YOUR_APP_ID, kw) ] ]
-		})
-
-	payload = {
-     "displayName" : "Google AppStore",  
-     "ipAddresses" : [],
-     "listenPorts" : [],
-     "type" : "AppStore",
-     "series" : series
-	}
-
+		metricStr += "business.store.rank,store=playstore,appid=" + YOUR_APP_ID + ",searchterm=\"" + kw + "\" " + str(checkAppPosition(YOUR_APP_ID, kw)) + "\n"
+	print(metricStr)	
 	try:
-		print(payload)
-		r = requests.post(YOUR_DT_API_URL + 'api/v1/entity/infrastructure/custom/appstore?Api-Token=' + YOUR_DT_API_TOKEN, json=payload)
-		print(r)
+		r = requests.post(YOUR_DT_API_URL + '/api/v2/metrics/ingest', headers={'Content-Type': 'text/plain', 'Authorization' : 'Api-Token ' + YOUR_DT_API_TOKEN}, data=metricStr)
+		print(r.text)
 	except ssl.SSLError:
 		print("SSL Error")
-	
+
 
 if __name__ == '__main__':
 	main()
