@@ -33,6 +33,7 @@ def checkAppPosition(appid, searchterm):
 def main():
 	metricStr = ""
 	for kw in KEYWORDS:
+		# if you want to profit from topology in Dynatrace you have to add a link to an entity as dimension: dt.entity.mobile_application=MOBILE-APPLICATION-1234435345
 		metricStr += "business.store.rank,store=playstore,appid=" + YOUR_APP_ID + ",searchterm=\"" + kw + "\" " + str(checkAppPosition(YOUR_APP_ID, kw)) + "\n"
 	print(metricStr)	
 	try:
